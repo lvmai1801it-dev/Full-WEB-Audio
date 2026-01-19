@@ -246,9 +246,10 @@ export async function PUT(request: NextRequest) {
             return Response.json({ error: 'No fields to update' }, { status: 400 });
         }
 
-        params.push(parseInt(id));
+        // params.push(parseInt(id)); // Old logic
+        params.push(id); // UUID
         await pool.query(
-            `UPDATE books SET ${updates.join(', ')} WHERE id = ?`,
+            `UPDATE books SET ${updates.join(', ')} WHERE uuid = ?`,
             params
         );
 
@@ -271,7 +272,17 @@ export async function DELETE(request: NextRequest) {
             return Response.json({ error: 'Book ID is required' }, { status: 400 });
         }
 
-        const bookId = parseInt(id);
+        // Lookup internal ID from UUID
+        const [rows] = await pool.query<RowDataPacket[]>(
+            'SELECT id FROM books WHERE uuid = ?',
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return Response.json({ error: 'Book not found' }, { status: 404 });
+        }
+
+        const bookId = rows[0].id;
 
         // Delete chapters first (FK constraint)
         await pool.query('DELETE FROM chapters WHERE book_id = ?', [bookId]);

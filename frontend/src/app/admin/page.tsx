@@ -138,7 +138,7 @@ function BookManager() {
         return () => clearTimeout(timer);
     }, [fetchBooks]);
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!confirm("Bạn có chắc chắn muốn xóa truyện này?")) return;
         try {
             await deleteBook(id);
