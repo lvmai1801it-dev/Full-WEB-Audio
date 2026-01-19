@@ -1,63 +1,51 @@
 version: '3.8'
 
 services:
-  # PHP + Apache
-  php:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: audio_php
-    ports:
-      - "8080:80"
-    volumes:
-      - ./backend:/var/www/html
-    depends_on:
-      - mysql
-    environment:
-      - DB_HOST=mysql
-      - DB_NAME=audio_truyen
-      - DB_USER=root
-      - DB_PASS=root123
-    networks:
-      - audio_network
-
-  # MySQL Database
-  mysql:
+  # 1. Database (MySQL) - Dữ liệu cũ / Crawler
+  db:
     image: mysql:8.0
-    container_name: audio_mysql
+    container_name: audio_truyen_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: audio_truyen # Đã sửa thành audio_truyen cho đồng nhất
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: audio_truyen
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_unicode_ci
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./database/sample_data.sql:/docker-entrypoint-initdb.d/02-sample.sql
-    networks:
-      - audio_network
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      - mysql_storage:/var/lib/mysql
 
-  # phpMyAdmin (optional - for database management)
+  # 2. phpMyAdmin - Quản lý MySQL
   phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: audio_phpmyadmin
-    ports:
-      - "8081:80"
+    image: phpmyadmin/phpmyadmin
+    container_name: audio_truyen_phpmyadmin
+    restart: always
     environment:
-      PMA_HOST: mysql
-      PMA_USER: root
-      PMA_PASSWORD: root123
+      PMA_HOST: db
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
     depends_on:
-      - mysql
-    networks:
-      - audio_network
-
-networks:
-  audio_network:
-    driver: bridge
+      - db
+  # 3. Application (Next.js - Frontend + Backend API)
+  # app:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: audio_truyen_app
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     # Kết nối MySQL (Thay vì MongoDB)
+  #     DB_HOST: db
+  #     DB_USER: root
+  #     DB_PASS: root
+  #     DB_NAME: audio_truyen
+  #     JWT_SECRET: this-is-a-secret-key-change-it-in-production
+  #   depends_on:
+  #     - db
 
 volumes:
-  mysql_data:
+  mysql_storage:
+
+
