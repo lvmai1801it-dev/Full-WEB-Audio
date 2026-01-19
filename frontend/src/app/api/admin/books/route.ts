@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { randomUUID } from 'crypto';
 import pool from '@/lib/mysql';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST /api/admin/books - Create book
+// POST /api/admin/books - Create book with chapters
 export async function POST(request: NextRequest) {
     const payload = verifyAuth(request);
     if (!payload) return unauthorizedResponse();
@@ -128,22 +129,79 @@ export async function POST(request: NextRequest) {
             if (authors.length > 0) {
                 authorId = authors[0].id;
             } else {
+                const authorUuid = randomUUID();
                 const [result] = await pool.query<ResultSetHeader>(
-                    'INSERT INTO authors (name, slug) VALUES (?, ?)',
-                    [body.author, authorSlug]
+                    'INSERT INTO authors (uuid, name, slug) VALUES (?, ?, ?)',
+                    [authorUuid, body.author, authorSlug]
                 );
                 authorId = result.insertId;
             }
         }
 
-        // Insert book
+        // Calculate total chapters
+        const totalChapters = body.chapters?.length || 0;
+
+        // Generate UUID for public access
+        const uuid = randomUUID();
+
+        // Insert book with UUID
         const [result] = await pool.query<ResultSetHeader>(
-            `INSERT INTO books (author_id, title, slug, description, thumbnail_url, source_url, total_chapters, is_published)
-            VALUES (?, ?, ?, ?, ?, ?, 0, 1)`,
-            [authorId, body.title, slug, body.description || null, body.thumbnailUrl || null, body.sourceUrl || null]
+            `INSERT INTO books (uuid, author_id, title, slug, description, thumbnail_url, source_url, total_chapters, is_published)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+            [uuid, authorId, body.title, slug, body.description || null, body.thumbnailUrl || null, body.sourceUrl || null, totalChapters]
         );
 
-        return Response.json({ success: true, id: result.insertId, slug }, { status: 201 });
+        const bookId = result.insertId;
+
+        // Insert chapters if provided
+        if (body.chapters && body.chapters.length > 0) {
+            for (const chapter of body.chapters) {
+                const chapterUuid = randomUUID();
+                await pool.query<ResultSetHeader>(
+                    `INSERT INTO chapters (uuid, book_id, chapter_index, title, audio_url)
+                    VALUES (?, ?, ?, ?, ?)`,
+                    [chapterUuid, bookId, chapter.index, chapter.title, chapter.audioUrl]
+                );
+            }
+        }
+
+        // Handle genres if provided
+        if (body.genres && body.genres.length > 0) {
+            for (const genreName of body.genres) {
+                const genreSlug = createSlug(genreName);
+
+                // Get or create genre
+                const [genres] = await pool.query<RowDataPacket[]>(
+                    'SELECT id FROM genres WHERE slug = ?',
+                    [genreSlug]
+                );
+
+                let genreId: number;
+                if (genres.length > 0) {
+                    genreId = genres[0].id;
+                } else {
+                    const genreUuid = randomUUID();
+                    const [genreResult] = await pool.query<ResultSetHeader>(
+                        'INSERT INTO genres (uuid, name, slug) VALUES (?, ?, ?)',
+                        [genreUuid, genreName, genreSlug]
+                    );
+                    genreId = genreResult.insertId;
+                }
+
+                // Link book to genre
+                await pool.query(
+                    'INSERT IGNORE INTO book_genres (book_id, genre_id) VALUES (?, ?)',
+                    [bookId, genreId]
+                );
+            }
+        }
+
+        return Response.json({
+            success: true,
+            id: uuid,  // Return UUID instead of numeric id
+            slug,
+            chaptersAdded: totalChapters
+        }, { status: 201 });
     } catch (error) {
         console.error('Create book API error:', error);
         return Response.json({ error: 'Internal server error' }, { status: 500 });

@@ -4,6 +4,7 @@ import { RowDataPacket } from 'mysql2';
 
 interface BookRow extends RowDataPacket {
     id: number;
+    uuid: string; // Add UUID field from query
     title: string;
     slug: string;
     description: string;
@@ -17,7 +18,7 @@ interface BookRow extends RowDataPacket {
 }
 
 interface GenreRow extends RowDataPacket {
-    id: number;
+    id: string; // UUID
     name: string;
     slug: string;
 }
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
         // Get books with author
         const [books] = await pool.query<BookRow[]>(
             `SELECT 
-                b.id, b.title, b.slug, b.description, b.thumbnail_url,
+                b.uuid as id, b.title, b.slug, b.description, b.thumbnail_url,
                 b.total_chapters, b.view_count, b.is_published, b.created_at,
                 a.name as author_name, a.slug as author_slug
             FROM books b
@@ -88,22 +89,23 @@ export async function GET(request: NextRequest) {
         const booksWithGenres = await Promise.all(
             books.map(async (book: BookRow) => {
                 const [genres] = await pool.query<GenreRow[]>(
-                    `SELECT g.id, g.name, g.slug
+                    `SELECT g.uuid as id, g.name, g.slug
                     FROM genres g
                     JOIN book_genres bg ON g.id = bg.genre_id
-                    WHERE bg.book_id = ?`,
+                    WHERE bg.book_id = (SELECT id FROM books WHERE uuid = ?)`,
                     [book.id]
                 );
 
                 return {
-                    id: book.id,
+                    id: book.id, // Now UUID string
                     title: book.title,
                     slug: book.slug,
                     author: {
+                        id: "", // TODO: need author UUID from query if needed
                         name: book.author_name || 'Unknown',
                         slug: book.author_slug || 'unknown',
                     },
-                    genres: genres.map((g: GenreRow) => ({ name: g.name, slug: g.slug })),
+                    genres: genres.map((g: GenreRow) => ({ id: g.id, name: g.name, slug: g.slug })),
                     thumbnailUrl: book.thumbnail_url,
                     totalChapters: book.total_chapters,
                     viewCount: book.view_count,

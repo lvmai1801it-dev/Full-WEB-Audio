@@ -4,6 +4,7 @@ import { RowDataPacket } from 'mysql2';
 
 interface BookRow extends RowDataPacket {
     id: number;
+    uuid: string;
     title: string;
     slug: string;
     description: string;
@@ -16,6 +17,7 @@ interface BookRow extends RowDataPacket {
     updated_at: Date;
     author_name: string;
     author_slug: string;
+    author_uuid: string;
 }
 
 interface GenreRow extends RowDataPacket {
@@ -42,9 +44,9 @@ export async function GET(
         // Get book with author
         const [books] = await pool.query<BookRow[]>(
             `SELECT 
-                b.id, b.title, b.slug, b.description, b.thumbnail_url, b.source_url,
+                b.id, b.uuid, b.title, b.slug, b.description, b.thumbnail_url, b.source_url,
                 b.total_chapters, b.view_count, b.is_published, b.created_at, b.updated_at,
-                a.name as author_name, a.slug as author_slug
+                a.name as author_name, a.slug as author_slug, a.uuid as author_uuid
             FROM books b
             LEFT JOIN authors a ON b.author_id = a.id
             WHERE b.slug = ? AND b.is_published = 1
@@ -63,7 +65,7 @@ export async function GET(
 
         // Get genres
         const [genres] = await pool.query<GenreRow[]>(
-            `SELECT g.name, g.slug
+            `SELECT g.uuid as id, g.name, g.slug
             FROM genres g
             JOIN book_genres bg ON g.id = bg.genre_id
             WHERE bg.book_id = ?`,
@@ -72,7 +74,7 @@ export async function GET(
 
         // Get chapters
         const [chapters] = await pool.query<ChapterRow[]>(
-            `SELECT id, title, chapter_index, audio_url, duration_seconds
+            `SELECT uuid as id, title, chapter_index, audio_url, duration_seconds
             FROM chapters
             WHERE book_id = ?
             ORDER BY chapter_index ASC`,
@@ -80,15 +82,16 @@ export async function GET(
         );
 
         return Response.json({
-            id: book.id,
+            id: book.uuid, // Return UUID
             title: book.title,
             slug: book.slug,
             description: book.description,
             author: {
+                id: book.author_uuid, // Return UUID
                 name: book.author_name || 'Unknown',
                 slug: book.author_slug || 'unknown',
             },
-            genres: genres.map((g: GenreRow) => ({ name: g.name, slug: g.slug })),
+            genres: genres.map((g: GenreRow) => ({ id: g.id, name: g.name, slug: g.slug })),
             thumbnailUrl: book.thumbnail_url,
             sourceUrl: book.source_url,
             totalChapters: book.total_chapters,
@@ -99,9 +102,9 @@ export async function GET(
             chapters: chapters.map((c: ChapterRow) => ({
                 id: c.id,
                 title: c.title,
-                chapterIndex: c.chapter_index,
-                audioUrl: c.audio_url,
-                durationSeconds: c.duration_seconds,
+                chapter_index: c.chapter_index,
+                audio_url: c.audio_url,
+                duration_seconds: c.duration_seconds,
             })),
         });
     } catch (error) {

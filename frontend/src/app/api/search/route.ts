@@ -3,7 +3,7 @@ import pool from '@/lib/mysql';
 import { RowDataPacket } from 'mysql2';
 
 interface BookRow extends RowDataPacket {
-    id: number;
+    id: string; // UUID
     title: string;
     slug: string;
     thumbnail_url: string;
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         // Search using LIKE (or FULLTEXT if available)
         const [books] = await pool.query<BookRow[]>(
             `SELECT 
-                b.id, b.title, b.slug, b.thumbnail_url, b.total_chapters,
+                b.uuid as id, b.title, b.slug, b.thumbnail_url, b.total_chapters,
                 a.name as author_name
             FROM books b
             LEFT JOIN authors a ON b.author_id = a.id

@@ -189,7 +189,7 @@ export default function BookDetailPage() {
                                 <div className="mt-3 flex flex-wrap gap-2">
                                     {book.genres.map((genre) => (
                                         <Link
-                                            key={genre.id}
+                                            key={genre.slug}
                                             href={`/genre/${genre.slug}`}
                                             className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 hover:bg-orange-200 dark:bg-orange-950 dark:text-orange-300"
                                         >

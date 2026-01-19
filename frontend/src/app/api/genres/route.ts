@@ -2,7 +2,7 @@ import pool from '@/lib/mysql';
 import { RowDataPacket } from 'mysql2';
 
 interface GenreRow extends RowDataPacket {
-    id: number;
+    id: string; // UUID
     name: string;
     slug: string;
     count: number;
@@ -13,7 +13,7 @@ export async function GET() {
     try {
         const [genres] = await pool.query<GenreRow[]>(
             `SELECT 
-                g.id, g.name, g.slug,
+                g.uuid as id, g.name, g.slug,
                 COUNT(bg.book_id) as count
             FROM genres g
             LEFT JOIN book_genres bg ON g.id = bg.genre_id

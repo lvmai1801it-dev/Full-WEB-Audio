@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-change-in-production';
-const JWT_EXPIRY = '24h';
+const USER_TOKEN_EXPIRY = '24h'; // Token user thường hết hạn sau 24h
 
 export interface JWTPayload {
     sub: string;
@@ -15,9 +15,16 @@ export interface JWTPayload {
 
 /**
  * Generate JWT token
+ * - Admin: không thời hạn (no expiration)
+ * - User thường: 24h
  */
 export function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+    // Admin token không có thời hạn
+    if (payload.role === 'admin') {
+        return jwt.sign(payload, JWT_SECRET);
+    }
+    // User thường có thời hạn 24h
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: USER_TOKEN_EXPIRY });
 }
 
 /**

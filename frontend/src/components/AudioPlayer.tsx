@@ -139,7 +139,7 @@ export function AudioPlayer() {
 
             // Update duration in database if not yet set
             if (currentTrack && currentTrack.duration_seconds === 0 && audioDuration > 0) {
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/update-duration.php`, {
+                fetch('/api/chapters/update-duration', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

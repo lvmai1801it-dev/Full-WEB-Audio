@@ -1,21 +1,21 @@
 // API Types for Audio Platform
 
 export interface Author {
-    id: number;
+    id: string; // UUID
     name: string;
     slug: string;
     avatar_url?: string;
 }
 
 export interface Genre {
-    id: number;
+    id: string; // UUID
     name: string;
     slug: string;
     book_count?: number;
 }
 
 export interface Chapter {
-    id: number;
+    id: string; // UUID
     title: string;
     chapter_index: number;
     audio_url: string;
@@ -23,7 +23,7 @@ export interface Chapter {
 }
 
 export interface Book {
-    id: number;
+    id: string; // UUID
     title: string;
     slug: string;
     description?: string;
@@ -78,7 +78,7 @@ export interface PlayerState {
 
 // LocalStorage Types
 export interface BookProgress {
-    chapterId: number;
+    chapterId: string;
     chapterIndex: number;
     position: number; // seconds
     updatedAt: string;
