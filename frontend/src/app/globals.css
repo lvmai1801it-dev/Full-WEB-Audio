@@ -1,25 +1,81 @@
 @import "tailwindcss";
 
 :root {
-  --background: 255 255 255;
-  --foreground: 24 24 27;
+  /* ZING MP3 DARK THEME - Always Dark */
+  --background: 23 15 35;
+  /* #170f23 */
+  --foreground: 255 255 255;
+
+  --card: 35 27 46;
+  /* #231b2e */
+  --card-foreground: 255 255 255;
+
+  --popover: 35 27 46;
+  --popover-foreground: 255 255 255;
+
+  --primary: 155 77 224;
+  /* #9b4de0 - Zing Purple */
+  --primary-foreground: 255 255 255;
+
+  --secondary: 52 40 65;
+  /* lighter purple */
+  --secondary-foreground: 255 255 255;
+
+  --muted: 35 27 46;
+  --muted-foreground: 255 255 255 / 0.5;
+
+  --accent: 233 82 136;
+  /* #e95288 - Pink accent */
+  --accent-foreground: 255 255 255;
+
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+
+  --border: 255 255 255 / 0.1;
+  --input: 255 255 255 / 0.1;
+  --ring: 155 77 224;
+
+  --radius: 0.5rem;
 }
 
+/* Force dark mode - no light mode */
 .dark {
-  --background: 9 9 11;
-  --foreground: 250 250 250;
+  --background: 23 15 35;
+  --foreground: 255 255 255;
+  --card: 35 27 46;
+  --card-foreground: 255 255 255;
+  --popover: 35 27 46;
+  --popover-foreground: 255 255 255;
+  --primary: 155 77 224;
+  --primary-foreground: 255 255 255;
+  --secondary: 52 40 65;
+  --secondary-foreground: 255 255 255;
+  --muted: 35 27 46;
+  --muted-foreground: 255 255 255 / 0.5;
+  --accent: 233 82 136;
+  --accent-foreground: 255 255 255;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 255 255 255 / 0.1;
+  --input: 255 255 255 / 0.1;
+  --ring: 155 77 224;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
   background: rgb(var(--background));
   color: rgb(var(--foreground));
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  min-height: 100vh;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Zing style */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -27,65 +83,69 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(161 161 170 / 0.5);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(161 161 170 / 0.8);
+  background: rgba(255, 255, 255, 0.4);
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: rgb(63 63 70 / 0.5);
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgb(63 63 70 / 0.8);
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-/* Line clamp utilities */
-.line-clamp-1 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-}
-
-.line-clamp-2 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.line-clamp-3 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-/* Gradient text */
+/* Zing MP3 Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  background: linear-gradient(135deg, #9b4de0 0%, #e95288 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
+/* Zing purple button glow */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(155, 77, 224, 0.4);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Glassmorphism for player */
+.glass {
+  background: rgba(35, 27, 46, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* Audio player animation */
 @keyframes pulse-ring {
   0% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    transform: scale(0.9);
+    opacity: 0.6;
   }
+
   50% {
-    transform: scale(1);
+    transform: scale(1.1);
     opacity: 0;
   }
+
   100% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    transform: scale(0.9);
+    opacity: 0.6;
   }
 }
 
@@ -94,18 +154,38 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2px solid rgb(249 115 22 / 0.5);
+  border: 2px solid rgba(155, 77, 224, 0.5);
   animation: pulse-ring 2s ease-out infinite;
 }
 
-/* Smooth page transitions */
-.page-enter {
-  opacity: 0;
-  transform: translateY(10px);
+/* Rotating disc animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 300ms, transform 300ms;
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-spin-slow.paused {
+  animation-play-state: paused;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Override for transforms */
+.transition-transform {
+  transition-property: transform;
+  transition-duration: 300ms;
 }

@@ -86,19 +86,22 @@ export async function GET(
             title: book.title,
             slug: book.slug,
             description: book.description,
+            // Flat author fields for player compatibility
+            author_name: book.author_name || 'Unknown',
+            author_slug: book.author_slug || 'unknown',
             author: {
                 id: book.author_uuid, // Return UUID
                 name: book.author_name || 'Unknown',
                 slug: book.author_slug || 'unknown',
             },
             genres: genres.map((g: GenreRow) => ({ id: g.id, name: g.name, slug: g.slug })),
-            thumbnailUrl: book.thumbnail_url,
-            sourceUrl: book.source_url,
-            totalChapters: book.total_chapters,
-            viewCount: book.view_count + 1,
-            isPublished: book.is_published === 1,
-            createdAt: book.created_at,
-            updatedAt: book.updated_at,
+            thumbnail_url: book.thumbnail_url, // snake_case for consistency
+            source_url: book.source_url,
+            total_chapters: book.total_chapters,
+            view_count: book.view_count + 1,
+            is_published: book.is_published === 1,
+            created_at: book.created_at,
+            updated_at: book.updated_at,
             chapters: chapters.map((c: ChapterRow) => ({
                 id: c.id,
                 title: c.title,

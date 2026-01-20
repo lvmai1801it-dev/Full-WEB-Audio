@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { AudioStorage, BookProgress, UserSettings } from "@/types";
+import type { AudioStorage, BookProgress, UserSettings, UserProgress } from "@/types";
 
 const STORAGE_KEY = "audio_truyen_storage";
 
@@ -49,15 +49,16 @@ export function useLocalStorage() {
     }, []);
 
     // Save progress for a book
-    const saveProgress = useCallback((bookSlug: string, progress: BookProgress) => {
+    const saveProgress = useCallback((bookSlug: string, progress: Partial<BookProgress>) => {
         setStorage((prev) => {
             const updated = {
                 ...prev,
                 progress: {
                     ...prev.progress,
                     [bookSlug]: {
+                        ...(prev.progress[bookSlug] || {} as UserProgress),
                         ...progress,
-                        updatedAt: new Date().toISOString(),
+                        last_listened_at: new Date().toISOString(),
                     },
                 },
             };
@@ -103,11 +104,10 @@ export function useLocalStorage() {
     }, [storage.favorites]);
 
     // Get recently played books
-    const getRecentlyPlayed = useCallback((): string[] => {
-        return Object.entries(storage.progress)
-            .sort((a, b) => new Date(b[1].updatedAt).getTime() - new Date(a[1].updatedAt).getTime())
-            .slice(0, 10)
-            .map(([slug]) => slug);
+    const getRecentlyPlayed = useCallback((): BookProgress[] => {
+        return Object.values(storage.progress)
+            .sort((a, b) => new Date(b.last_listened_at).getTime() - new Date(a.last_listened_at).getTime())
+            .slice(0, 10);
     }, [storage.progress]);
 
     return {

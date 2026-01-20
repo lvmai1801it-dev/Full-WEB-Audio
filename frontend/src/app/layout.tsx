@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
@@ -67,9 +66,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <MainLayout>
+            {children}
+          </MainLayout>
           <AudioPlayer />
         </AuthProvider>
       </body>

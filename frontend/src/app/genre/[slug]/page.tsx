@@ -40,7 +40,7 @@ export default function GenrePage() {
                 setIsLoading(true);
                 const res = await getBooks({ genre: slug, page, limit: 24 });
                 setBooks(res.data);
-                setTotalPages(res.pagination.totalPages);
+                setTotalPages(res.pagination?.totalPages || 1);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
             } finally {
