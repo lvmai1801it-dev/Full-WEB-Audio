@@ -31,7 +31,7 @@ interface ChapterRow extends RowDataPacket {
     duration_seconds: number;
 }
 
-// GET /api/books - List all books with pagination
+// GET /api/books - List all books with pagination (OPTIMIZED)
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -64,15 +64,19 @@ export async function GET(request: NextRequest) {
             orderBy = 'ORDER BY b.title ASC';
         }
 
-        // Get books with author
-        const [books] = await pool.query<BookRow[]>(
+        // OPTIMIZED: Single query with genres using GROUP_CONCAT
+        const [books] = await pool.query<RowDataPacket[]>(
             `SELECT 
                 b.uuid as id, b.title, b.slug, b.description, b.thumbnail_url,
                 b.total_chapters, b.view_count, b.is_published, b.created_at,
-                a.name as author_name, a.slug as author_slug
+                a.name as author_name, a.slug as author_slug, a.uuid as author_uuid,
+                GROUP_CONCAT(DISTINCT CONCAT(g.uuid, ':', g.name, ':', g.slug) SEPARATOR '|') as genres_data
             FROM books b
             LEFT JOIN authors a ON b.author_id = a.id
+            LEFT JOIN book_genres bg ON b.id = bg.book_id
+            LEFT JOIN genres g ON bg.genre_id = g.id
             ${whereClause}
+            GROUP BY b.id
             ${orderBy}
             LIMIT ? OFFSET ?`,
             [...params, limit, offset]
@@ -80,41 +84,38 @@ export async function GET(request: NextRequest) {
 
         // Get total count
         const [countResult] = await pool.query<RowDataPacket[]>(
-            `SELECT COUNT(*) as total FROM books b ${whereClause}`,
+            `SELECT COUNT(DISTINCT b.id) as total FROM books b ${whereClause}`,
             params
         );
         const total = countResult[0]?.total || 0;
 
-        // Get genres for each book
-        const booksWithGenres = await Promise.all(
-            books.map(async (book: BookRow) => {
-                const [genres] = await pool.query<GenreRow[]>(
-                    `SELECT g.uuid as id, g.name, g.slug
-                    FROM genres g
-                    JOIN book_genres bg ON g.id = bg.genre_id
-                    WHERE bg.book_id = (SELECT id FROM books WHERE uuid = ?)`,
-                    [book.id]
-                );
+        // Parse genres from GROUP_CONCAT result
+        const booksWithGenres = books.map((book: RowDataPacket) => {
+            const genres = book.genres_data
+                ? book.genres_data.split('|').map((g: string) => {
+                    const [id, name, slug] = g.split(':');
+                    return { id, name, slug };
+                })
+                : [];
 
-                return {
-                    id: book.id, // Now UUID string
-                    title: book.title,
-                    slug: book.slug,
-                    author: {
-                        id: "", // TODO: need author UUID from query if needed
-                        name: book.author_name || 'Unknown',
-                        slug: book.author_slug || 'unknown',
-                    },
-                    genres: genres.map((g: GenreRow) => ({ id: g.id, name: g.name, slug: g.slug })),
-                    thumbnailUrl: book.thumbnail_url,
-                    totalChapters: book.total_chapters,
-                    viewCount: book.view_count,
-                    createdAt: book.created_at,
-                };
-            })
-        );
+            return {
+                id: book.id,
+                title: book.title,
+                slug: book.slug,
+                author: {
+                    id: book.author_uuid || '',
+                    name: book.author_name || 'Unknown',
+                    slug: book.author_slug || 'unknown',
+                },
+                genres,
+                thumbnailUrl: book.thumbnail_url,
+                totalChapters: book.total_chapters,
+                viewCount: book.view_count,
+                createdAt: book.created_at,
+            };
+        });
 
-        return Response.json({
+        return new Response(JSON.stringify({
             data: booksWithGenres,
             pagination: {
                 page,
@@ -122,9 +123,15 @@ export async function GET(request: NextRequest) {
                 total,
                 totalPages: Math.ceil(total / limit),
             },
+        }), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+            },
         });
     } catch (error) {
         console.error('Books API error:', error);
         return Response.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
+

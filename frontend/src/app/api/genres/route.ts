@@ -23,14 +23,20 @@ export async function GET() {
             ORDER BY count DESC`
         );
 
-        return Response.json(
+        // Genres change rarely, cache for 5 minutes
+        return new Response(JSON.stringify(
             genres.map((g: GenreRow) => ({
                 id: g.id,
                 name: g.name,
                 slug: g.slug,
-                count: g.count,
+                book_count: g.count,
             }))
-        );
+        ), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+            },
+        });
     } catch (error) {
         console.error('Genres API error:', error);
         return Response.json({ error: 'Internal server error' }, { status: 500 });
