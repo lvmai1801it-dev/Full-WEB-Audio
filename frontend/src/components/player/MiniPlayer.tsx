@@ -43,7 +43,7 @@ export function MiniPlayer({ onOpenFull }: MiniPlayerProps) {
     const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 h-[90px] glass border-t border-white/10">
+        <div className="fixed bottom-[140px] md:bottom-0 left-0 right-0 z-50 h-[60px] md:h-[90px] glass border-t border-white/10">
             {/* Progress Bar - Top Line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 cursor-pointer group" onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -60,14 +60,14 @@ export function MiniPlayer({ onOpenFull }: MiniPlayerProps) {
                 />
             </div>
 
-            <div className="h-full flex items-center px-5 gap-4">
+            <div className="h-full flex items-center px-3 md:px-5 gap-2 md:gap-4">
                 {/* Left: Track Info */}
                 <div
-                    className="flex items-center gap-3 w-[280px] shrink-0 cursor-pointer"
+                    className="flex items-center gap-2 md:gap-3 flex-1 md:flex-none md:w-[280px] shrink-0 cursor-pointer overflow-hidden"
                     onClick={onOpenFull}
                 >
                     {/* Rotating Disc */}
-                    <div className={`relative h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-white/20 ${isPlaying ? 'animate-spin-slow' : ''}`}>
+                    <div className={`relative h-10 w-10 md:h-12 md:w-12 shrink-0 rounded-full overflow-hidden border-2 border-white/20 ${isPlaying ? 'animate-spin-slow' : ''}`}>
                         {currentBook.thumbnail_url ? (
                             <Image
                                 src={currentBook.thumbnail_url}
@@ -93,8 +93,31 @@ export function MiniPlayer({ onOpenFull }: MiniPlayerProps) {
                     </div>
                 </div>
 
-                {/* Center: Controls */}
-                <div className="flex-1 flex flex-col items-center justify-center">
+                {/* Mobile Only: Simple Play/Pause Button */}
+                <div className="md:hidden flex items-center gap-2">
+                    <Button
+                        size="icon"
+                        onClick={togglePlay}
+                        className="h-10 w-10 rounded-full bg-white text-[#170f23] hover:bg-white/90"
+                    >
+                        {isPlaying ? (
+                            <Pause className="h-5 w-5 fill-current" />
+                        ) : (
+                            <Play className="h-5 w-5 fill-current ml-0.5" />
+                        )}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={next}
+                        className="h-9 w-9 text-white/70"
+                    >
+                        <SkipForward className="h-5 w-5 fill-current" />
+                    </Button>
+                </div>
+
+                {/* Center: Controls - Hidden on mobile, shown on desktop */}
+                <div className="hidden md:flex flex-1 flex-col items-center justify-center">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -135,8 +158,8 @@ export function MiniPlayer({ onOpenFull }: MiniPlayerProps) {
                     </div>
                 </div>
 
-                {/* Right: Speed, Timer, Volume & Queue */}
-                <div className="flex items-center gap-2 w-[320px] justify-end shrink-0">
+                {/* Right: Speed, Timer, Volume & Queue - Hidden on mobile */}
+                <div className="hidden md:flex items-center gap-2 w-[320px] justify-end shrink-0">
                     {/* Speed Control */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
